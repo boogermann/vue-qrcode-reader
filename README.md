@@ -1,238 +1,195 @@
-# vue-qrcode-reader
+<p align="center">
+  <img src="https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/logo.png" alt="Logo" width="240" height="240" style="max-width: 100%;">
 
-[![npm](https://img.shields.io/npm/v/vue-qrcode-reader.svg) ![npm](https://img.shields.io/npm/dm/vue-qrcode-reader.svg)](https://www.npmjs.com/package/vue-qrcode-reader)
-[![vue2](https://img.shields.io/badge/vue-2.x-brightgreen.svg)](https://vuejs.org/)
+  <br>
+  <br>
 
-A Vue.js component, accessing the device camera and allowing users to read QR codes, within the browser.
+  <a href="https://vuejs.org/">
+    <img src="https://img.shields.io/badge/vue-2.x-brightgreen.svg" alt="for Vue.js 2">
+  </a>
 
-:point_right: In Chrome this component [only works with HTTPS](https://sites.google.com/a/chromium.org/dev/Home/chromium-security/deprecating-powerful-features-on-insecure-origins) (or localhost)
+  <a href="https://www.npmjs.com/package/vue-qrcode-reader">
+    <img src="https://img.shields.io/npm/dm/vue-qrcode-reader.svg" alt="npm monthly downloads">
+  </a>
 
-[Demo](https://gruhn.github.io/vue-qrcode-reader-demo) | [Source](https://github.com/gruhn/vue-qrcode-reader-demo/blob/master/src/components/TheQrcodeReaderDemo.vue)
+  <a href="https://travis-ci.org/gruhn/vue-qrcode-reader">
+    <img src="https://travis-ci.org/gruhn/vue-qrcode-reader.svg?branch=master" alt="Travis CI: build status">
+  </a>
 
-# Usage
-Once a stream from the users camera is loaded, it is displayed and continuously scanned for QR codes. Results are indicated by the `decode` event.
+  <br>
 
-`decode` only carries the string, encoded by the QR code. If you also want to track the QR codes position, listen for the `locate` event. Its payload is an array of coordinates (for example `{ x: 278, y: 346 }`) of the QR codes corners, relative to the components position and size. The event is emitted whenever the coordinates change or no QR code is detected anymore, resulting in an empty array payload.
+  <img src="https://img.shields.io/badge/Maintained%3F-yes-green.svg" alt="is maintained? yes">
+
+  <a href="http://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/github/license/Naereen/StrapDown.js.svg" alt="licence: MIT">
+  </a>
+
+  <a href="https://github.com/Naereen/badges">
+    <img src="https://img.shields.io/badge/badges-awesome-green.svg" alt="badges = awesome">
+  </a>
+
+  <br>
+
+  <a href="https://github.com/semantic-release/semantic-release">
+    <img src="https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg" alt="uses semantic release">
+  </a>
+
+  <a href="https://github.com/prettier/prettier">
+    <img src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square" alt="code style: prettier">
+  </a>
+
+  <br>
+
+  <a href="https://bundlephobia.com/result?p=vue-qrcode-reader">
+    <img src="https://badgen.net/bundlephobia/minzip/vue-qrcode-reader" alt="size minified + gzipped">
+  </a>
+
+  <a href="https://www.npmjs.com/package/vue-qrcode-reader">
+    <img src="https://img.shields.io/npm/v/vue-qrcode-reader.svg" alt="npm current version">
+  </a>
+
+  <br>
+  <br>
+  <a href="https://gruhn.github.io/vue-qrcode-reader/api/QrcodeStream.html">documentation</a> |
+  <a href="https://gruhn.github.io/vue-qrcode-reader/demos/DecodeAll.html">live demos</a>
+</p>
+
+A set of Vue.js components, allowing you to detect and decode QR codes, without leaving the browser.
+
+- :movie_camera: `QrcodeStream` accesses the device camera and continuously scans incoming frames.
+- :put_litter_in_its_place: `QrcodeDropZone` renders to an empty region where you can drag-and-drop images to be decoded.
+- :open_file_folder: `QrcodeCapture` is a classic file upload field, instantly scanning all files you select.
+
+All components are responsive. Beyond that, close to zero styling. Make them fit your layout. Usage is simple and straight forward:
 
 ```html
-<qrcode-reader @decode="onDecode" @locate="onLocate"></qrcode-reader>
+<qrcode-stream @decode="onDecode"></qrcode-stream>
 ```
-```javascript
+
+```js
 methods: {
-  onDecode (content) {
-    // ...
-  },
-
-  onLocate (points) {
-    // ...
-  }
-}
-```
-It might take a while before the component is ready and the scanning process starts. The user has to be asked for camera access permission first and the camera stream has to be loaded.
-
-If you want to show a loading indicator, you can listen for the `init` event. It's emitted as soon as the component is mounted and carries a promise which resolves when everything is ready. The promise is rejected if initialization fails. This can have a couple of reasons. 
-
-:point_right: Camera access permission can't really be requested a second time. Once denied, it can only be re-granted in the browser settings. So to avoid panic and frustration, make sure your users understand why you need this permisson.
-
-```html
-<qrcode-reader @init="onInit"></qrcode-reader>
-```
-```javascript
-methods: {
-  async onInit (promise) {
-    // show loading indicator
-
-    try {
-      await promise
-
-      // successfully initialized
-    } catch (error) {
-      if (error.name === 'NotAllowedError') {
-        // user denied camera access permisson
-      } else if (error.name === 'NotFoundError') {
-        // no suitable camera device installed
-      } else if (error.name === 'NotSupportedError') {
-        // page is not served over HTTPS (or localhost)
-      } else {
-        // browser is probably lacking features (WebRTC, Canvas)
-      }
-    } finally {
-      // hide loading indicator
-    }
-  }
-}
-```
-Distributed content will overlay the camera stream, wrapped in a `position: absolute` container. You can use this for example to highlight the detected position of QR codes.
-
-```html
-<qrcode-reader>
-  <b>stuff here overlays the camera stream</b>
-</qrcode-reader>
-```
-
-With the `paused` prop you can prevent further `decode` and `locate` propagation. Useful for example if you're only interested in the first result. This will also freeze the camera stream.
-
-```html
-<qrcode-reader @decode="onDecode" :paused="paused"></qrcode-reader>
-```
-```javascript
-data () {
-  return {
-    paused: false
-  }
-},
-
-methods: {
-  onDecode (content) {
-    this.paused = true
+  onDecode (decodedString) {
     // ...
   }
 }
 ```
 
-# Installation
+### Screenshots
 
-```
-yarn add vue-qrcode-reader
-# or
-npm install --save vue-qrcode-reader
+<p align="center">
+  <img src="https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/screenshot1.png" height="500" alt="Screenshot 1">
+  <img src="https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/screenshot2.png" height="500" alt="Screenshot 2">
+  <img src="https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/screenshot3.png" height="500" alt="Screenshot 3">
+</p>
+
+# Browser support :chart_with_upwards_trend:
+
+#### `QrcodeStream`
+
+This component fundamentally depends on the [Stream API](https://caniuse.com/#feat=stream).
+
+| ![Internet Explorer](https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/ie_32x32.png) | ![Edge](https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/edge_32x32.png) | ![Firefox](https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/firefox_32x32.png) | ![Chrome](https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/chrome_32x32.png) | ![Safari](https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/safari_32x32.png) |
+| :---------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------: |
+|                                                     No                                                      |                                               Yes                                                |                                                  Yes                                                   |                                                 Yes                                                  |                                                 11+                                                  |
+
+- Chrome requires [HTTPS or localhost](https://sites.google.com/a/chromium.org/dev/Home/chromium-security/deprecating-powerful-features-on-insecure-origins) (see _Troubleshooting_ for help)
+- Safari also requires HTTPS **even** on localhost (see [#48](../../issues/48))
+- on iOS it **really only** works with Safari. It won't work in
+  - _Chrome for iOS_, _Firefox for iOS_, ... (see [#29](../../issues/29))
+  - a WebView component of your native iOS App
+  - web apps added to home screen (see [#76](../../issues/76))
+
+#### `QrcodeDropZone` and `QrcodeCapture`
+
+The newest API these components depend on is the [FileReader API](https://caniuse.com/#feat=filereader).
+
+| ![Internet Explorer](https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/ie_32x32.png) | ![Edge](https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/edge_32x32.png) | ![Firefox](https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/firefox_32x32.png) | ![Chrome](https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/chrome_32x32.png) | ![Safari](https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/safari_32x32.png) |
+| :---------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------: |
+|                                                     10+                                                     |                                               Yes                                                |                                                  Yes                                                   |                                                 Yes                                                  |                                                 Yes                                                  |
+
+- Drag-and-drop is not supported on mobile
+- Home screen web apps on iOS prior to 11.3 don't support `QrcodeCapture` (see [this StackOverflow question](https://stackoverflow.com/questions/46228218/how-to-access-camera-on-ios11-home-screen-web-app))
+
+# Installation :package:
+
+## Module import
+
+Run:
+
+```bash
+npm install vue-qrcode-reader
 ```
 
-It's highly recommended to install [webrtc-adapter](https://github.com/webrtc/adapter) too (a shim for WebRTC).
-```
-yarn add webrtc-adapter
-# or
-npm install --save webrtc-adapter
-```
-
-## Default import
-
-Register component globally:
+Either import the components independantly for local registration:
 
 ```javascript
-import Vue from 'vue'
-import VueQrcodeReader from 'vue-qrcode-reader'
+import { QrcodeStream, QrcodeDropZone, QrcodeCapture } from 'vue-qrcode-reader'
 
-Vue.use(VueQrcodeReader)
-```
+const MyComponent = {
 
-Register locally in other components scope:
-
-```javascript
-import Vue from 'vue'
-import { QrcodeReader } from 'vue-qrcode-reader'
-
-Vue.component('my-component', {
-  // ...
   components: {
-    // ...
-    'qrcode-reader': QrcodeReader
+    QrcodeStream,
+    QrcodeDropZone,
+    QrcodeCapture
   },
+
   // ...
-)
+))
+```
+
+Or register all of them globally right away:
+
+```javascript
+import Vue from "vue";
+import VueQrcodeReader from "vue-qrcode-reader";
+
+Vue.use(VueQrcodeReader);
 ```
 
 **⚠️ A css file is included when importing the package. You may have to setup your bundler to embed the css in your page.**
 
-## Distribution import
+## Classic import
 
-Register component globally:
+Vue itself must be included first. Then add the following CSS and JS file:
 
-```javascript
-import 'vue-qrcode-reader/dist/vue-qrcode-reader.css'
-import VueQrcodeReader from 'vue-qrcode-reader/dist/vue-qrcode-reader.common'
+- `<link href="`[vue-qrcode-reader.css](https://unpkg.com/vue-qrcode-reader/dist/vue-qrcode-reader.css)`" rel="stylesheet">`
+- `<script src="`[vue-qrcode-reader.browser.js](https://unpkg.com/vue-qrcode-reader/dist/vue-qrcode-reader.browser.js)`"></script>`
 
-Vue.use(VueQrcodeReader)
-```
-
-Register locally in other components scope:
-
-```javascript
-import 'vue-qrcode-reader/dist/vue-qrcode-reader.css'
-import { QrcodeReader } from 'vue-qrcode-reader/dist/vue-qrcode-reader.common'
-
-Vue.component('my-component', {
-  // ...
-  components: {
-    // ...
-    'qrcode-reader': QrcodeReader
-  },
-  // ...
-)
-```
-
-**⚠️ You may have to setup your bundler to embed the css file in your page.**
-
-## Browser
+All components are automatically registered globally.
+Use kebab-case to reference them in your templates:
 
 ```html
-<link rel="stylesheet" href="vue-qrcode-reader/dist/vue-qrcode-reader.css"/>
-
-<script src="vue.js"></script>
-<script src="vue-qrcode-reader/dist/vue-qrcode-reader.browser.js"></script>
+<qrcode-stream></qrcode-stream>
+<qrcode-drop-zone></qrcode-drop-zone>
+<qrcode-capture></qrcode-capture>
 ```
 
-The plugin should be auto-installed. If not, you can install it manually with the instructions below.
+# Troubleshooting :zap:
 
-Register component globally:
+#### I don't see the camera when using `QrcodeStream`.
 
-```javascript
-Vue.use(VueQrcodeReader)
-```
+- Check if it works on the demo page. Especially the [Decode All](https://gruhn.github.io/vue-qrcode-reader/demos/DecodeAll.html) demo, since it renders error messages. If you see errors, consult the docs to understand their meaning.
+  - The demo works but it doesn't work in my project: Listen for the `init` event to investigate errors.
+  - The demo doesn't work: Carefully review the Browser Support section above. Maybe your device is just not supported.
 
-Register locally in other components scope:
+#### I'm running a dev server on localhost. How to test on my mobile device without HTTPS?
 
-```javascript
-Vue.component('my-component', {
-  // ...
-  components: {
-    // ...
-    'qrcode-reader': VueQrcodeReader.QrcodeReader
-  },
-  // ...
-)
-```
+- If your setup is Desktop Chrome + Android Chrome, use [Remote Debugging](https://developers.google.com/web/tools/chrome-devtools/remote-debugging/) which allows your Android device to [access your local server as localhost](https://developers.google.com/web/tools/chrome-devtools/remote-debugging/local-server).
+- Otherwise use a reverse proxy like [ngrok](https://ngrok.com/) or [serveo](https://serveo.net/) to temporarily make your local server publicly available with HTTPS.
+- There are also loads of serverless/static hosting services that have HTTPS enabled by default and where you can deploy your web app for free. For example _GitHub Pages_, _Google Firebase_, _Netlify_, ...
 
-## Source import
+#### Some of my QR codes are not being detected.
 
-Register component globally:
+- Make sure, there is some white border around the QR code.
+- Color inverted QR codes are not supported (dark background, light foreground).
+- [Model 1 QR codes](https://en.wikipedia.org/wiki/QR_code#Model_1) are also not supported.
 
-```javascript
-import Vue from 'vue'
-import VueQrcodeReader from 'vue-qrcode-reader/src'
+# Thanks :pray:
 
-Vue.use(VueQrcodeReader)
-```
-
-Register locally in other components scope:
-
-```javascript
-import Vue from 'vue'
-import { QrcodeReader } from 'vue-qrcode-reader/src'
-
-Vue.component('my-component', {
-  // ...
-  components: {
-    // ...
-    'qrcode-reader': QrcodeReader
-  },
-  // ...
-)
-```
-
-**⚠️ You need to configure your bundler to compile `.vue` files.** More info [in the official documentation](https://vuejs.org/v2/guide/single-file-components.html).
-
----
-
-# Contributing
-
-All contributions are welcome. If you wish to contribution code:
-
- * Make sure you have editorconfig installed.
- * Please follow [Vues official style guide](https://vuejs.org/v2/style-guide/).
- * Use [BEM](http://getbem.com/) naming convention for CSS classes.
-
-
-# License
-
-[MIT](http://opensource.org/licenses/MIT)
+<a href="https://browserstack.com">
+  <img height="38" src="https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/browserstack-logo.png" alt="BrowserStack Logo">
+</a>
+<span>&emsp;&emsp;</span>
+<a href="https://travis-ci.org">
+  <img height="38" src="https://raw.githubusercontent.com/gruhn/vue-qrcode-reader/master/.github/travis-logo.png" alt="Travis-CI Logo">
+</a>
